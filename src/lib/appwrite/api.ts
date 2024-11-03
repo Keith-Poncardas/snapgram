@@ -482,7 +482,7 @@ export async function getInfinitePosts({ pageParam }: { pageParam: number }) {
   // Initialize the query array with common query parameters
   // - `orderDesc("$updatedAt")`: orders posts by the `updatedAt` timestamp in descending order
   // - `limit(9)`: limits the number of posts per request to 9
-  const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(10)];
+  const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(12)];
 
   // If `pageParam` is provided, add a cursor query to load the next set of posts
   // - `cursorAfter(pageParam)`: continues pagination from the last seen post based on `pageParam`
