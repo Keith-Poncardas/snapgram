@@ -71,8 +71,8 @@ const PostCard = ({ post }: PostCardProps) => {
             <ReadMore
               text={caption}
               initialVisibleChars={190}
-              seeMoreLabel=" Show More"
-              seeLessLabel=" Show Less"
+              seeMoreLabel="more"
+              seeLessLabel="less"
               textClassName="text-base"
               toggleClassName="text-blue-500 font-bold cursor-pointer"
             />
