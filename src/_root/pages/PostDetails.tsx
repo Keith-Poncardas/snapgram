@@ -8,6 +8,7 @@ import PostStats from "@/components/shared/PostStats"; // Component for displayi
 import GridPostList from "@/components/shared/GridPostList"; // Component for displaying a list of related posts
 import { Models } from "appwrite";
 import { deleteSavedPost } from "@/lib/appwrite/api";
+import { ReadMore } from "@/components/shared/Readmore";
 
 const PostDetails = () => {
   const navigate = useNavigate(); // Hook for programmatic navigation
@@ -136,17 +137,26 @@ const PostDetails = () => {
             <hr className="border w-full border-dark-4/80" />
 
             {/* Post caption and tags */}
-            <div className="flex flex-col flex-1 w-full small-medium lg:base-regular">
-              <p>{post?.caption}</p> {/* Caption of the post */}
-              <ul className="flex gap-1 mt-2">
-                {post?.tags.map((tag: string, index: string) => (
-                  <li
-                    key={`${tag}${index}`}
-                    className="text-light-3 small-regular">
-                    #{tag} {/* Tag for the post */}
-                  </li>
+            <div className="small-medium lg:base-medium">
+              <p> {/* Post caption text */}
+                <ReadMore
+                  text={post.caption}
+                  initialVisibleChars={190}
+                  seeMoreLabel=" Show More"
+                  seeLessLabel=" Show Less"
+                  textClassName="text-base"
+                  toggleClassName="text-blue-500 font-bold cursor-pointer"
+                />
+              </p>
+
+              {/* Tags List: Display tags associated with the post */}
+              <div className="mt-2">
+                {post.tags.map((tag: string) => (
+                  <span key={tag} className="text-light-3 mr-1">
+                    #{tag} {/* Each tag as a list item */}
+                  </span>
                 ))}
-              </ul>
+              </div>
             </div>
 
             {/* Post stats (likes, comments, etc.) */}

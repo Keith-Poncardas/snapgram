@@ -45,7 +45,7 @@ export function formatDateString(dateString: string): string {
 
 /**
  * Format a timestamp into a relative time string like "5 minutes ago" or "Just now."
- * Falls back to full date formatting if the time difference is over a month.
+ * Falls back to full date formatting if the time difference is over a year.
  *
  * @param {string} timestamp - ISO string or date string to format.
  * @returns {string} - Relative time or formatted date.
@@ -60,12 +60,19 @@ export const multiFormatDateString = (timestamp: string = ""): string => {
   const diffInMinutes = diffInSeconds / 60;
   const diffInHours = diffInMinutes / 60;
   const diffInDays = diffInHours / 24;
+  const diffInWeeks = diffInDays / 7;
+  const diffInMonths = diffInDays / 30;
+  const diffInYears = diffInDays / 365;
 
   const pluralize = (value: number, unit: string) =>
     `${Math.floor(value)} ${unit}${Math.floor(value) > 1 ? "s" : ""} ago`;
 
-  if (diffInDays >= 30) {
-    return formatDateString(timestamp); // Use full date if more than a month
+  if (diffInYears >= 1) {
+    return pluralize(diffInYears, "year");
+  } else if (diffInMonths >= 1) {
+    return pluralize(diffInMonths, "month");
+  } else if (diffInWeeks >= 1) {
+    return pluralize(diffInWeeks, "week");
   } else if (diffInDays >= 1) {
     return pluralize(diffInDays, "day");
   } else if (diffInHours >= 1) {
