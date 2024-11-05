@@ -3,7 +3,7 @@ import UserCard from "@/components/shared/UserCard";
 import { AllUsersSkeleton } from "@/components/skeletons";
 
 // Import the custom toast hook to show feedback messages to the user
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "react-hot-toast";
 
 // Import the custom hook for fetching user data using React Query
 import { useGetUsers } from "@/lib/react-query/queriesAndMutations";
@@ -11,8 +11,6 @@ import { useGetUsers } from "@/lib/react-query/queriesAndMutations";
 
 // Define the AllUsers component
 const AllUsers = () => {
-  // Destructure the toast function from the custom toast hook for triggering notifications
-  const { toast } = useToast();
 
   // Destructure the results of the `useGetUsers` hook:
   // - `data` is aliased as `creators`, representing the user data fetched from the API.
@@ -23,7 +21,7 @@ const AllUsers = () => {
   // Handle any errors that occur during the data fetch
   if (isErrorCreators) {
     // Show a toast notification if an error occurs
-    toast({ title: "Something went wrong." });
+    toast.error("Something went wrong.");
     // Exit the function early as there’s nothing to render when there’s an error
     return;
   }
