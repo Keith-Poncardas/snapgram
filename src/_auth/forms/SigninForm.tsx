@@ -1,8 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Link, useNavigate } from "react-router-dom"
 
-import { useToast } from "@/hooks/use-toast"
-
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 
@@ -13,12 +11,10 @@ import { z } from "zod"
 import { useSignInAccount } from "@/lib/react-query/queriesAndMutations"
 import { useUserContext } from "@/context/AuthContext"
 import { PulseLoader } from "react-spinners"
+import { toast } from "react-hot-toast";
 
 // Define a functional component named SigninForm
 const SigninForm = () => {
-
-  // This is likely used to display notifications to the user
-  const { toast } = useToast();
 
   // Used to programmatically navigate between different routes in your app
   const navigate = useNavigate();
@@ -45,32 +41,38 @@ const SigninForm = () => {
   // Define an asynchronous function named onSubmit that accepts a values parameter
   // inferred from the SignupValidation schema
   async function onSubmit(values: z.infer<typeof SigninValidation>) {
+    // Use toast.promise for handling loading, success, and error messages
+    await toast.promise(
+      (async () => {
+        // Sign in the new user account using the email and password from the provided values
+        const session = await signInAccount({
+          email: values.email,
+          password: values.password,
+        });
 
-    // Sign in the new user account using the email and password from the provided values
-    const session = await signInAccount({
-      email: values.email,
-      password: values.password
-    })
+        // If signing in fails, throw an error to trigger the toast error message
+        if (!session) {
+          throw new Error('Invalid Credentials!');
+        }
 
-    // If signing in fails, display an error toast notification
-    if (!session) {
-      return toast({ title: "Oops! Invalid Credentials. Please try again." });
-    }
+        // Check if the user is authenticated using the checkAuthUser function
+        const isLoggedIn = await checkAuthUser();
 
-    // Check if the user is authenticated using the checkAuthUser function
-    const isLoggedIn = await checkAuthUser();
-
-    // If the user is authenticated
-    if (isLoggedIn) {
-      // Reset the form to its default values
-      form.reset();
-
-      // Navigate to the home page
-      navigate('/');
-    } else {
-      // If authentication fails, display an error toast notification
-      return toast({ title: "Sign in failed. Please try again." });
-    }
+        // If the user is authenticated, proceed with form reset and navigation
+        if (isLoggedIn) {
+          form.reset(); // Reset the form to its default values
+          navigate('/'); // Navigate to the home page
+        } else {
+          // Throw an error if authentication check fails
+          throw new Error('Sign in failed. Please try again.');
+        }
+      })(),
+      {
+        loading: 'Signing in...',
+        success: 'Welcome back!',
+        error: (err) => err.message, // Display the error message from the thrown error
+      }
+    );
   }
 
   // Render the form using the spread operator to apply all form properties

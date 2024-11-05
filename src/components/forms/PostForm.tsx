@@ -18,9 +18,9 @@ import { PostValidation } from "@/lib/validation"; // Validation schema for the 
 import { Models } from "appwrite"; // Type definition for data models from Appwrite
 import { useCreatePost, useUpdatePost } from "@/lib/react-query/queriesAndMutations"; // Custom hook for post creation mutation
 import { useNavigate } from "react-router-dom"; // Navigation hook for redirecting users
-import { useToast } from "@/hooks/use-toast"; // Custom hook for displaying toast notifications
 import { useUserContext } from "@/context/AuthContext"; // Custom hook for accessing user context
 import { PulseLoader } from "react-spinners";
+import { toast } from "react-hot-toast";
 
 // Define prop types for the component for type safety and clarity
 type PostFormProps = {
@@ -33,7 +33,6 @@ const PostForm = ({ post, action }: PostFormProps) => {
 
   // Initialize navigation and toast notification hooks
   const navigate = useNavigate(); // Allows redirection to different routes
-  const { toast } = useToast(); // Displays success or error messages to the user
   const { user } = useUserContext(); // Access logged-in user data from context
 
   // Extract the async mutation function for creating a new post
@@ -56,46 +55,61 @@ const PostForm = ({ post, action }: PostFormProps) => {
   // Function to handle form submission for creating or updating a post
   const onSubmit = async (formData: z.infer<typeof PostValidation>) => {
     try {
-      // Check if the action is to update an existing post
+      // If the action is to update an existing post
       if (post && action === "Update") {
-        // Update the post with the provided form data
-        const updatedPost = await updatePost({
-          ...formData,             // Spread the form data
-          postId: post.$id,        // Include the post ID for the update
-          imageId: post?.imageId,  // Include the existing image ID
-          imageUrl: post?.imageUrl  // Include the existing image URL
-        });
+        await toast.promise(
+          (async () => {
+            // Attempt to update the post with the provided form data
+            const updatedPost = await updatePost({
+              ...formData,             // Spread the form data
+              postId: post.$id,        // Include the post ID for the update
+              imageId: post?.imageId,  // Include the existing image ID
+              imageUrl: post?.imageUrl  // Include the existing image URL
+            });
 
-        // Check if the update was successful
-        if (!updatedPost) {
-          toast({ title: "Please try again." }); // Notify user of failure
-        } else {
-          toast({ title: "Post edited successfully!" }); // Notify user of success
+            if (!updatedPost) {
+              throw new Error("Please try again."); // Throw an error if update fails
+            }
+
+            // Redirect to the updated post page after a successful update
+            navigate(`/posts/${post.$id}`);
+          })(),
+          {
+            loading: "Updating post...",
+            success: "Post edited successfully!",
+            error: (err) => err.message || "Failed to update the post.",
+          }
+        );
+        return; // End function after update
+      }
+
+      // Creating a new post if action is not "Update"
+      await toast.promise(
+        (async () => {
+          const newPost = await createPost({
+            ...formData,
+            userId: user.id
+          });
+
+          if (!newPost) {
+            throw new Error("Create post failed. Please try again."); // Throw error if creation fails
+          }
+
+          // Redirect to the homepage after successful post creation
+          navigate("/");
+        })(),
+        {
+          loading: "Creating post...",
+          success: "Post created successfully!",
+          error: (err) => err.message || "Failed to create the post.",
         }
-
-        // Redirect to the homepage after updating
-        return navigate(`/posts/${post.$id}`);
-      }
-
-      // Attempt to create a new post with the submitted form data and user ID
-      const newPost = await createPost({ ...formData, userId: user.id });
-
-      // Check if the post creation was successful
-      if (newPost) {
-        // Notify user of successful post creation
-        toast({ title: "Post created successfully!" });
-        // Redirect to the homepage after successful creation
-        navigate("/");
-      } else {
-        // Display an error message if post creation fails
-        toast({ title: "Create post failed. Please try again." });
-      }
+      );
     } catch (error: any) {
-      // Handle any unexpected errors during post creation or update
+      // Handle any unexpected errors and show the error message in a toast
       console.error("Error creating post:", error);
-      toast({ title: error.message }); // Notify user of the error message
     }
   };
+
 
   // Function to determine and display the loading state during post creation or update
   const renderSubmitButton = () => {

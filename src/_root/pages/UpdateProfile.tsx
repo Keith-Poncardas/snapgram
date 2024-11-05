@@ -15,15 +15,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useUserContext } from "@/context/AuthContext";
 import { ProfileValidation } from "@/lib/validation";
 import { useGetUserById, useUpdateUser } from "@/lib/react-query/queriesAndMutations";
-import { PuffLoader } from "react-spinners";
+import { PuffLoader, PulseLoader } from "react-spinners";
 import ProfileUploader from "@/components/shared/ProfileUploader";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { toast } from "react-hot-toast";
 
 
 const UpdateProfile = () => {
-  const { toast } = useToast();
   const navigate = useNavigate();
   const { id } = useParams();
   const { user, setUser } = useUserContext();
@@ -52,29 +52,41 @@ const UpdateProfile = () => {
 
   // Handler
   const handleUpdate = async (value: z.infer<typeof ProfileValidation>) => {
-    const updatedUser = await updateUser({
-      userId: currentUser.$id,
-      name: value.name,
-      bio: value.bio,
-      username: value.username,
-      file: value.file,
-      imageUrl: currentUser.imageUrl,
-      imageId: currentUser.imageId,
-    });
+    await toast.promise(
+      (async () => {
+        // Attempt to update the user profile with the provided values
+        const updatedUser = await updateUser({
+          userId: currentUser.$id,
+          name: value.name,
+          bio: value.bio,
+          username: value.username,
+          file: value.file,
+          imageUrl: currentUser.imageUrl,
+          imageId: currentUser.imageId,
+        });
 
-    if (!updatedUser) {
-      toast({
-        title: `Update user failed. Please try again.`,
-      });
-    }
+        // If update fails, throw an error to trigger the toast error message
+        if (!updatedUser) {
+          throw new Error("Update user failed. Please try again.");
+        }
 
-    setUser({
-      ...user,
-      name: updatedUser?.name,
-      bio: updatedUser?.bio,
-      imageUrl: updatedUser?.imageUrl,
-    });
-    return navigate(`/profile/${id}`);
+        // Update the user state with the latest profile details
+        setUser({
+          ...user,
+          name: updatedUser.name,
+          bio: updatedUser.bio,
+          imageUrl: updatedUser.imageUrl,
+        });
+
+        // Navigate to the updated profile page after successful update
+        navigate(`/profile/${id}`);
+      })(),
+      {
+        loading: "Updating profile...",
+        success: "Profile updated successfully!",
+        error: (err) => err.message || "Failed to update profile.",
+      }
+    );
   };
 
   return (
@@ -191,7 +203,10 @@ const UpdateProfile = () => {
                 className="shad-button_primary whitespace-nowrap"
                 disabled={isLoadingUpdate}>
                 {isLoadingUpdate ? (
-                  <PuffLoader color="white" size={20} />
+                  <PulseLoader
+                    color="white"
+                    size={8}
+                  />
                 ) : (
                   <span>
                     Update Profile

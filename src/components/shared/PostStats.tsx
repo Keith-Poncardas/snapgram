@@ -2,6 +2,7 @@ import { useDeleteSavedPost, useGetCurrentUser, useLikePost, useSavePost } from 
 import { checkIsLiked } from "@/lib/utils";
 import { Models } from "appwrite";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { PuffLoader } from "react-spinners";
 
 type PostStatsProps = {
@@ -62,6 +63,7 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
       const savedRecordId = currentUser.save.find((record: Models.Document) => record.post.$id === post.$id)?.$id;
       if (savedRecordId) deleteSavedPost(savedRecordId);
     } else {
+      toast.success("You saved the post!");
       setIsSaved(true);
       savePost({ postId: post.$id, userId });
     }

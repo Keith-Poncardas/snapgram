@@ -1,8 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Link, useNavigate } from "react-router-dom"
 
-import { useToast } from "@/hooks/use-toast"
-
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 
@@ -13,12 +11,10 @@ import { z } from "zod"
 import { useCreateUserAccount, useSignInAccount } from "@/lib/react-query/queriesAndMutations"
 import { useUserContext } from "@/context/AuthContext"
 import { PulseLoader } from "react-spinners"
+import { toast } from "react-hot-toast";
 
 // Define a functional component named SignupForm
 const SignupForm = () => {
-
-  // This is likely used to display notifications to the user
-  const { toast } = useToast();
 
   // Used to programmatically navigate between different routes in your app
   const navigate = useNavigate();
@@ -51,44 +47,45 @@ const SignupForm = () => {
   // Define an asynchronous function named onSubmit that accepts a values parameter
   // inferred from the SignupValidation schema
   async function onSubmit(values: z.infer<typeof SignupValidation>) {
+    await toast.promise(
+      (async () => {
+        // Create a new user account using the createUserAccount function with the provided values
+        const newUser = await createUserAccount(values);
 
-    // Create a new user account using the createUserAccount function with the provided values
-    const newUser = await createUserAccount(values);
+        // If creating the new user account fails, throw an error to trigger the toast error message
+        if (!newUser) {
+          throw new Error('Sign up failed. Please try again.');
+        }
 
-    // If creating the new user account fails, display an error toast notification
-    if (!newUser) {
-      return toast({ title: "Sign up failed. Please try again." });
-    }
+        // Sign in the new user account using the email and password from the provided values
+        const session = await signInAccount({
+          email: values.email,
+          password: values.password,
+        });
 
-    // Sign in the new user account using the email and password from the provided values
-    const session = await signInAccount({
-      email: values.email,
-      password: values.password
-    })
+        // If signing in fails, throw an error to trigger the toast error message
+        if (!session) {
+          throw new Error("Sign in failed. Please try again.");
+        }
 
-    // If signing in fails, display an error toast notification
-    if (!session) {
-      return toast({ title: "Sign in failed. Please try again." });
-    }
+        // Check if the user is authenticated using the checkAuthUser function
+        const isLoggedIn = await checkAuthUser();
 
-    // Check if the user is authenticated using the checkAuthUser function
-    const isLoggedIn = await checkAuthUser();
+        // If the user is not authenticated, throw an error
+        if (!isLoggedIn) {
+          throw new Error("Sign in failed. Please try again.");
+        }
 
-    // If the user is authenticated
-    if (isLoggedIn) {
-      // Reset the form to its default values
-      form.reset();
-
-      // Display a welcome toast notification with the user's name
-      toast({ title: `Welcome ${values.name}!` });
-
-      // Navigate to the home page
-      navigate('/');
-    } else {
-      // If authentication fails, display an error toast notification
-      return toast({ title: "Sign in failed. Please try again." });
-    }
-
+        // If everything is successful, reset the form and navigate to the home page
+        form.reset();
+        navigate('/'); // Navigate to the home page
+      })(),
+      {
+        loading: 'Signing up...',
+        success: `Welcome, ${values.name}!`,
+        error: (err) => err.message, // Display specific error messages
+      }
+    );
   }
 
   // Render the form using the spread operator to apply all form properties

@@ -6,7 +6,7 @@ import { AllUsers, CreatePost, EditPost, Explore, Home, PostDetails, Profile, Sa
 import SignupForm from './_auth/forms/SignupForm'
 import AuthLayout from './_auth/AuthLayout'
 import RootLayout from './_root/RootLayout'
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from 'react-hot-toast'
 
 const App = () => {
   return (
