@@ -1,5 +1,6 @@
 // Import the UserCard component for displaying individual user information
 import UserCard from "@/components/shared/UserCard";
+import { AllUsersSkeleton } from "@/components/skeletons";
 
 // Import the custom toast hook to show feedback messages to the user
 import { useToast } from "@/hooks/use-toast";
@@ -7,8 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 // Import the custom hook for fetching user data using React Query
 import { useGetUsers } from "@/lib/react-query/queriesAndMutations";
 
-// Import the PuffLoader component to show a loading spinner while data is being fetched
-import { PuffLoader } from "react-spinners";
 
 // Define the AllUsers component
 const AllUsers = () => {
@@ -40,9 +39,7 @@ const AllUsers = () => {
         {/* Conditional rendering based on loading status and data availability */}
         {isLoading && !creators ? (
           // Show a loading spinner in the center if data is still loading
-          <div className="flex-center w-full h-full">
-            <PuffLoader color="white" />
-          </div>
+          <AllUsersSkeleton />
         ) : (
           // Display the list of users once data is loaded
           <ul className="user-grid">

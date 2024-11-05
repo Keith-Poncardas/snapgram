@@ -1,9 +1,8 @@
 import GridPostList from "@/components/shared/GridPostList";
+import { SavedSkeleton } from "@/components/skeletons";
 import { useGetCurrentUser } from "@/lib/react-query/queriesAndMutations";
 import { Models } from "appwrite";
 
-
-import { PuffLoader } from "react-spinners";
 
 const Saved = () => {
   const { data: currentUser } = useGetCurrentUser();
@@ -31,7 +30,7 @@ const Saved = () => {
       </div>
 
       {!currentUser ? (
-        <PuffLoader color="white" />
+        <SavedSkeleton />
       ) : (
         <ul className="w-full flex justify-center max-w-5xl gap-9">
           {savePosts.length === 0 ? (

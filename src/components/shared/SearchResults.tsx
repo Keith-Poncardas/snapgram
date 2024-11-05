@@ -1,5 +1,6 @@
-import { PuffLoader } from "react-spinners";
+
 import GridPostList from "./GridPostList";
+import { ExploreSkeleton } from "../skeletons";
 
 export type SearchResultProps = {
   isSearchFetching: boolean;
@@ -8,7 +9,7 @@ export type SearchResultProps = {
 
 const SearchResults = ({ isSearchFetching, searchedPosts }: SearchResultProps) => {
   if (isSearchFetching) {
-    return <PuffLoader color="white" />;
+    return <ExploreSkeleton />;
   } else if (searchedPosts && searchedPosts.documents.length > 0) {
     return <GridPostList posts={searchedPosts.documents} showUser={true} showStats={true} />;
   } else {

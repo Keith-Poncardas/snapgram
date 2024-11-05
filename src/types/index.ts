@@ -17,6 +17,7 @@ export type IUpdateUser = {
   userId: string;
   name: string;
   bio: string;
+  username: string;
   imageId: string;
   imageUrl: URL | string;
   file: File[];

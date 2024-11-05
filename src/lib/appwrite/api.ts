@@ -1,6 +1,12 @@
 import { ID, ImageGravity, Query } from "appwrite";
 
-import { INewPost, INewUser, ISaveUserToDB, IUpdatePost } from "@/types";
+import {
+  INewPost,
+  INewUser,
+  ISaveUserToDB,
+  IUpdatePost,
+  IUpdateUser,
+} from "@/types";
 import { account, appwriteConfig, avatars, databases, storage } from "./config";
 import { generateRandomString, processTags, sanitizeUsername } from "../utils";
 
@@ -614,5 +620,101 @@ export async function getUserPosts(userId?: string) {
     return post;
   } catch (error) {
     console.log(error);
+  }
+}
+
+/**
+ * Updates a user's information in the database, including their profile image.
+ *
+ * This function performs the following:
+ * - Checks if a new file (image) needs to be uploaded for the user.
+ * - If a new file is provided, it uploads the file, retrieves its URL, and updates
+ *   the user's image data accordingly.
+ * - Updates the user's information in the database, including name, bio, and image details.
+ * - If the update is successful, deletes the old image file (if any).
+ * - If any operation fails, rolls back changes by deleting any newly uploaded file.
+ *
+ * @param {IUpdateUser} user - The user data to update, including file, name, bio, imageUrl, imageId, and userId.
+ * @returns {Promise<any>} The updated user object if successful; throws a detailed error otherwise.
+ */
+export async function updateUser(user: IUpdateUser): Promise<any> {
+  // Check if a new file is provided for updating the user's image
+  const hasFileToUpdate = user.file.length > 0;
+
+  // Initialize the image object with the current image data
+  let image = {
+    imageUrl: user.imageUrl,
+    imageId: user.imageId,
+  };
+
+  try {
+    // If a new file is provided, upload it and update image details
+    if (hasFileToUpdate) {
+      try {
+        // Upload the new file to Appwrite storage and check if the upload was successful
+        const uploadedFile = await uploadFile(user.file[0]);
+        if (!uploadedFile) throw new Error("File upload returned null.");
+
+        // Retrieve the URL for the newly uploaded file
+        const fileUrl = getFilePreview(uploadedFile.$id);
+        if (!fileUrl) {
+          // If URL retrieval fails, delete the uploaded file to avoid unused storage
+          await deleteFile(uploadedFile.$id);
+          throw new Error("Failed to retrieve URL for uploaded file.");
+        }
+
+        // Update the image object with new file URL and ID
+        image = { ...image, imageUrl: fileUrl, imageId: uploadedFile.$id };
+      } catch (uploadError: any) {
+        // Throw an error with details if file upload or URL retrieval fails
+        throw new Error(`Image upload failed: ${uploadError.message}`);
+      }
+    }
+
+    // Attempt to update the user data in the database
+    let updatedUser;
+    try {
+      // Update the user document with new name, bio, and updated image information
+      updatedUser = await databases.updateDocument(
+        appwriteConfig.databaseId, // Database ID for Appwrite
+        appwriteConfig.userCollectionId, // Collection ID for users
+        user.userId, // Unique ID for the user being updated
+        {
+          name: user.name, // Updated user name
+          bio: user.bio, // Updated user bio
+          username: user.username, // Updated user username
+          imageUrl: image.imageUrl, // Updated image URL
+          imageId: image.imageId, // Updated image ID
+        }
+      );
+      if (!updatedUser) throw new Error("Database update returned null.");
+    } catch (dbError: any) {
+      // If the database update fails, delete the new file if it was uploaded
+      if (hasFileToUpdate) {
+        await deleteFile(image.imageId);
+      }
+      // Throw an error with details if the database update fails
+      throw new Error(`Database update failed: ${dbError.message}`);
+    }
+
+    // After a successful update, delete the old image file if a new one was uploaded
+    if (user.imageId && hasFileToUpdate) {
+      try {
+        await deleteFile(user.imageId); // Delete the old file using its ID
+      } catch (deleteOldFileError: any) {
+        // Log a warning if the old file deletion fails, but continue
+        console.warn(
+          `Warning: Failed to delete old image file: ${deleteOldFileError.message}`
+        );
+      }
+    }
+
+    // Return the updated user data after all steps are successful
+    return updatedUser;
+  } catch (error: any) {
+    // Log the error for debugging purposes
+    console.error("User update process failed:", error.message);
+    // Rethrow the error with additional context for external error handling
+    throw new Error(`User update failed: ${error.message}`);
   }
 }

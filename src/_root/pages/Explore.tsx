@@ -13,6 +13,7 @@ import { PuffLoader } from "react-spinners";
 import GridPostList from "@/components/shared/GridPostList";
 import { Input } from "@/components/ui/input";
 import SearchResults from "@/components/shared/SearchResults";
+import { ExploreSkeleton } from "@/components/skeletons";
 
 // Main component for exploring and searching posts
 const Explore = () => {
@@ -20,13 +21,13 @@ const Explore = () => {
   const { ref, inView } = useInView();
 
   // Destructure data and pagination methods from the custom hook for fetching posts
-  const { data: posts, fetchNextPage, hasNextPage } = useGetPosts();
+  const { data: posts, isPending: isPostFetching, fetchNextPage, hasNextPage } = useGetPosts();
 
   // State for storing the search input value
   const [searchValue, setSearchValue] = useState("");
 
   // Apply debounce to the search value to optimize search API calls
-  const debouncedSearch = useDebounce(searchValue, 500);
+  const debouncedSearch = useDebounce(searchValue, 300);
 
   // Fetch search results based on debounced search input
   const { data: searchedPosts, isFetching: isSearchFetching } = useSearchPosts(debouncedSearch);
@@ -38,21 +39,14 @@ const Explore = () => {
     }
   }, [inView, searchValue]);
 
-  // Show loading spinner if posts data is not yet available
-  if (!posts) {
-    return (
-      <div className="flex-center w-full h-full">
-        <PuffLoader color="white" />
-      </div>
-    );
-  }
-
   // Condition to check if search results should be displayed
   const shouldShowSearchResults = searchValue !== "";
 
-  // Condition to check if 'End of posts' message should be displayed
-  const shouldShowPosts = !shouldShowSearchResults &&
-    posts.pages.every((item: any) => item.documents.length === 0);
+  // Check if 'End of posts' message should be displayed
+  const shouldShowPosts =
+    !shouldShowSearchResults &&
+    posts?.pages?.every((item: any) => item.documents.length === 0);
+
 
   return (
     <div className="explore-container">
@@ -100,24 +94,22 @@ const Explore = () => {
       {/* Main content section for displaying posts or search results */}
       <div className="flex flex-wrap gap-9 w-full max-w-5xl">
         {/* Display search results if there is a search value */}
-        {shouldShowSearchResults ? (
+        {isPostFetching ? (
+          <ExploreSkeleton />
+        ) : shouldShowSearchResults ? (
           <SearchResults
-            isSearchFetching={isSearchFetching} // Loading indicator for search
-            searchedPosts={searchedPosts}       // Search result data
+            isSearchFetching={isSearchFetching}
+            searchedPosts={searchedPosts}
           />
         ) : shouldShowPosts ? (
-          // Display end-of-posts message if no posts are found
           <p className="text-light-4 mt-10 text-center w-full">End of posts</p>
         ) : (
-          // Display list of posts when not in search mode
-          posts.pages.map((item: any, index: any) => (
-            <GridPostList
-              key={`page-${index}`}          // Unique key for each page
-              posts={item.documents}         // List of posts for the page
-              showUser={true}                // Prop to show user info
-              showStats={true}               // Prop to show post stats
-            />
-          ))
+          posts?.pages.map((item, index) => {
+            if (item)
+              return (
+                <GridPostList key={`page-${index}`} posts={item.documents} showUser={true} showStats={true} />
+              );
+          })
         )}
       </div>
 

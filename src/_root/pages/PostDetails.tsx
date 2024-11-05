@@ -9,6 +9,7 @@ import GridPostList from "@/components/shared/GridPostList"; // Component for di
 import { Models } from "appwrite";
 import { deleteSavedPost } from "@/lib/appwrite/api";
 import { ReadMore } from "@/components/shared/Readmore";
+import { PostDetailsSkeleton } from "@/components/skeletons";
 
 const PostDetails = () => {
   const navigate = useNavigate(); // Hook for programmatic navigation
@@ -63,7 +64,8 @@ const PostDetails = () => {
 
       {/* Display loading spinner or post details */}
       {isLoading || !post ? (
-        <PuffLoader color="white" /> // Show loading spinner if data is loading
+        // <PuffLoader color="white" /> // Show loading spinner if data is loading
+        <PostDetailsSkeleton />
       ) : (
         <div className="post_details-card">
           <img
@@ -175,7 +177,9 @@ const PostDetails = () => {
           More Related Posts {/* Header for related posts */}
         </h3>
         {isUserPostLoading || !relatedPosts ? (
-          <PuffLoader color="white" /> // Loading spinner for related posts
+          <div className="w-full flex justify-center items-center">
+            <PuffLoader color="white" />
+          </div>
         ) : (
           <GridPostList posts={relatedPosts} showUser={true} showStats={true} />
         )}

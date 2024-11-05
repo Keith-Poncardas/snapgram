@@ -1,8 +1,8 @@
 // Importing necessary components and libraries
 import PostCard from "@/components/shared/PostCard"; // Component to display individual posts
+import { HomeSkeleton } from "@/components/skeletons";
 import { useGetRecentPosts } from "@/lib/react-query/queriesAndMutations"; // Custom hook for fetching recent posts
 import { Models } from "appwrite"; // Importing Models from Appwrite SDK
-import { PuffLoader } from "react-spinners"; // Loader component for displaying loading state
 
 // Functional component for the Home page
 const Home = () => {
@@ -18,7 +18,7 @@ const Home = () => {
 
           {/* Conditional rendering: show loader if posts are loading and not yet available */}
           {isPostLoading && !posts ? (
-            <PuffLoader color="white" /> // Loader component while posts are being fetched
+            <HomeSkeleton />
           ) : (
             // Render the list of posts if available
             <ul className="flex flex-col flex-1 gap-9 w-full"> {/* Flex column for posts */}
