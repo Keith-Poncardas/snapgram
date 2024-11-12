@@ -13,6 +13,7 @@ type PostStatsProps = {
 const PostStats = ({ post, userId }: PostStatsProps) => {
   // Initialize likes array based on post data
   const initialLikes = post?.likes.map((user: Models.Document) => user.$id);
+
   const [likes, setLikes] = useState(initialLikes);
 
   // Track whether the post is saved by the current user
@@ -59,11 +60,12 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
     if (!post?.$id || !currentUser) return; // Ensure post ID and current user data exist
 
     if (isSaved) {
+      toast.success("You unsaved the post");
       setIsSaved(false);
       const savedRecordId = currentUser.save.find((record: Models.Document) => record.post.$id === post.$id)?.$id;
       if (savedRecordId) deleteSavedPost(savedRecordId);
     } else {
-      toast.success("You saved the post!");
+      toast.success("You saved the post");
       setIsSaved(true);
       savePost({ postId: post.$id, userId });
     }
@@ -108,7 +110,7 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
           }}
           className="cursor-pointer"
         />
-        <p className="small-medium lg:base-medium">{likes.length}</p>
+        <p className="small-medium lg:base-medium cursor-pointer" title={initialLikes}>{likes.length}</p>
       </div>
 
       {/* Save section with loader and toggle icon */}

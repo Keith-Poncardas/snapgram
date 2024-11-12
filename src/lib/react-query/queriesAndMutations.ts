@@ -82,6 +82,7 @@ const getRecentPostsFn = () => getRecentPosts(); // Retrieves the latest posts f
 // Custom hook `useGetRecentPosts` manages fetching and caching of recent posts
 export const useGetRecentPosts = () => {
   return useQuery({
+    refetchInterval: 1000,
     queryKey: [QUERY_KEYS.GET_RECENT_POSTS], // Unique cache key to identify and manage recent posts data
     queryFn: getRecentPostsFn, // Function to fetch recent posts data
   });
